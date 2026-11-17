@@ -1,9 +1,10 @@
 # method to get data from a source
 import os
+from pathlib import Path
 
 
 TEST = False
-LIMITE_EXCEL = 1_048_575
+EXCEL_MAX_ROWS = 1_048_575
 
 REFERENTIEL_ROME = "path_to_referentiel_rome"
 
@@ -25,13 +26,13 @@ MODEL = dict(
     prefix_query="query: ",
 )
 FILE_EMBEDDING = [
-    # chemin du fichier, colonne qui contient les tâches, feuille Excel (nom ou numéro, ignoré pour un .csv)
-    dict(chemin="./data_a_classer/taches_generees_10_par_macro.xlsx", colonne="libelle_competence", feuille=0),
+    # file path, column holding the tasks, Excel sheet (name or number)
+    dict(path="./data_a_classer/taches_generees_10_par_macro.xlsx", column="libelle_competence", sheet=0),
 ]
 TOP_K = 10           # nombre de macros gardées par tâche
 BLOC = 5000          # tâches encodées entre deux sauvegardes
 BATCH_ENCODE = 32    # taille des lots sur la carte (32 laisse de la marge avec un modèle 8B)
-DOSSIER_SORTIE = "embedding"
+OUTPUT_DIR_EMBEDDING = "embedding"
 
 COLONNES = ["libelle_macro_competence", "libelle_macro_competence_en", "objectif", "domaine_competence"]
 
@@ -43,7 +44,7 @@ FILES_QWEN = [
     # dict(path="./classes_embedding/large_data_2026-11-09-10-03-23_part2_classe.xlsx", column="word", description="description"),
 ]
 OUTPUT_DIR_QWEN = "classes_qwen"
-CHECKPOINT_DIR = OUTPUT_DIR_QWEN / "checkpoints"
+CHECKPOINT_DIR = Path(OUTPUT_DIR_QWEN) / "checkpoints"
 
 OLLAMA_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 LLM_MODEL = "qwen3.8:latest"

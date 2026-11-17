@@ -4,17 +4,18 @@ import torch
 from pathlib import Path
 
 import constant
+import sources
 
 class Embedding:
     def __init__(self):
         self.step_name = "Embedding"
-        self.modele = None
-        self.referentiel = None
-        self.vecteurs_macros = None
+        self.model = None
+        self.reference = None
+        self.macro_vectors = None
 
     def run(self):
         print(f"Running step: {self.step_name}")
-        Path(constant.OUTPUT_DIR).mkdir(exist_ok=True)
+        Path(constant.OUTPUT_DIR_EMBEDDING).mkdir(exist_ok=True)
         self.load_model()
         self.load_reference()
         self.encode_macros()
@@ -23,27 +24,29 @@ class Embedding:
 
 
     def load_model(self):
-        self.modele = SentenceTransformer(constant.MODEL["model_name"])
+        self.model = SentenceTransformer(constant.MODEL["model_name"])
 
     def load_reference(self):
-        self.referentiel = pd.read_excel(constant.REFERENTIEL_ROME).drop_duplicates(subset=constant.COLONNES, keep="first")
-        self.referentiel = self.referentiel[constant.COLONNES].reset_index(drop=True)
+        """One row per macro (FR label). Deduplicating on the FR label only: a few macros have two EN labels,
+        and a duplicated macro would appear twice in the top k and break add_macro_1_info."""
+        reference = pd.read_excel(constant.REFERENTIEL_ROME).drop_duplicates(subset=constant.COLONNES[0], keep="first")
+        self.reference = reference[constant.COLONNES].reset_index(drop=True)
 
     def encode_macros(self):
         labels = self.reference[constant.COLONNES[0]].tolist()
         self.macro_vectors = self.encode(labels, constant.MODEL["prefix_document"])
 
     
-    def encoder(self, textes, prefixe):
-        vecteurs = self.modele.encode([prefixe + t for t in textes], batch_size=constant.BATCH_ENCODE,
-                                      normalize_embeddings=True, convert_to_tensor=True,
-                                      show_progress_bar=False)
-        return vecteurs.float()
+    def encode(self, texts, prefix):
+        vectors = self.model.encode([prefix + t for t in texts], batch_size=constant.BATCH_ENCODE,
+                                    normalize_embeddings=True, convert_to_tensor=True,
+                                    show_progress_bar=False)
+        return vectors.float()
 
 
     def classify_file(self, path, column, sheet):
         name = Path(path).stem
-        checkpoint = Path(constant.OUTPUT_DIR) / f"{name}.in_progress.parquet"
+        checkpoint = Path(constant.OUTPUT_DIR_EMBEDDING) / f"{name}.in_progress.parquet"
 
         df = pd.read_excel(path, sheet_name=sheet, engine="calamine")
         tasks = df[column].fillna("").astype(str).str.strip()
@@ -57,23 +60,21 @@ class Embedding:
         self.write(output, name) # modify when db 
         checkpoint.unlink(missing_ok=True) 
 
-    @staticmethod
-    def load_checkpoint(checkpoint):
+    def load_checkpoint(self, checkpoint):
         """Tasks already classified during a previous run (empty if there are none)."""
         if checkpoint.exists():
             return pd.read_parquet(checkpoint)
         return pd.DataFrame({"task": []})
 
-    @staticmethod
-    def tasks_to_classify(tasks, already_done):
+    def tasks_to_classify(self, tasks, already_done):
         """Unique, non-empty tasks that are not classified yet."""
         done = set(already_done["task"])
         return [t for t in pd.unique(tasks) if t and t not in done]
 
     def classify_in_chunks(self, tasks, already_done, checkpoint):
         results = already_done
-        for start in range(0, len(tasks), constant.CHUNK_SIZE):
-            chunk = tasks[start:start + constant.CHUNK_SIZE] 
+        for start in range(0, len(tasks), constant.BLOC):
+            chunk = tasks[start:start + constant.BLOC]
             results = pd.concat([results, self.classify_chunk(chunk)])
             results.to_parquet(checkpoint, index=False)
             print(f"  {start + len(chunk)}/{len(tasks)} tasks classified")
@@ -85,7 +86,7 @@ class Embedding:
         scores, indices = torch.topk(vectors @ self.macro_vectors.T, k=constant.TOP_K)
         scores, indices = scores.cpu().numpy(), indices.cpu().numpy()
 
-        labels = self.reference[constant.COLUMN_NAME[0]].values
+        labels = self.reference[constant.COLONNES[0]].values
         result = pd.DataFrame({"task": chunk})
         for k in range(constant.TOP_K):
             result[f"macro_{k + 1}"] = labels[indices[:, k]]
@@ -93,6 +94,8 @@ class Embedding:
         return result
 
     def add_macro_1_info(self, results):
+        if results.empty:  # file with no task: there is no macro_1 column
+            return results
         info = self.reference.set_index("libelle_macro_competence")
         results["macro_1_en"] = results["macro_1"].map(info["libelle_macro_competence_en"])
         results["objectif_macro_1"] = results["macro_1"].map(info["objectif"])
@@ -102,11 +105,9 @@ class Embedding:
     @staticmethod
     def write(output, name):
         if len(output) <= constant.EXCEL_MAX_ROWS:
-            path = Path(constant.OUTPUT_DIR) / f"{name}_classe.xlsx"
+            path = Path(constant.OUTPUT_DIR_EMBEDDING) / f"{name}_classe.xlsx"
             output.to_excel(path, index=False, engine="xlsxwriter")
         else:
-            path = Path(constant.OUTPUT_DIR) / f"{name}_classe.csv"
+            path = Path(constant.OUTPUT_DIR_EMBEDDING) / f"{name}_classe.csv"
             output.to_csv(path, index=False, encoding="utf-8-sig")
         print(f"  -> {path}")
-
-
