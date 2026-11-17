@@ -2,9 +2,9 @@ import constant
 import pandas as pd
 
 
-class Extraction:
+class FormatTask:
     def __init__(self):
-        self.step_name = "Extraction"
+        self.step_name = "FormatTask"
 
     def run(self):
         print(f"Running step: {self.step_name}")
@@ -12,7 +12,6 @@ class Extraction:
         df_task = "not implemented"
         cleaned_task = self.clean_task(df_task)
         # filtered_task = self.filter_task(cleaned_task)
-
 
     def clean_task(self, df_task):
         print(f"{self.step_name} - Cleaning task: {df_task}")

@@ -1,0 +1,18 @@
+# Dependencies for classer_embedding.py
+#
+# Install (in your venv):
+#   pip install -r requirements_classer_embedding.txt
+#
+# Versions = the ones tested in this environment.
+
+# PyTorch index (CUDA 12.6 builds), searched in addition to PyPI
+--extra-index-url https://download.pytorch.org/whl/cu126
+
+pandas==3.0.5                  # reading / writing the task files
+torch==2.8.0+cu126             # tensors, similarity and top-k on the GPU (+cu126 = CUDA build, not CPU)
+sentence-transformers==6.0.1   # loads and runs the embedding model
+transformers==5.17.0           # used by sentence-transformers to load the model
+python-calamine==0.9.1         # fast reading of large Excel files (engine="calamine")
+openpyxl==3.1.5                # reading the reference file (pandas default .xlsx engine)
+xlsxwriter==3.3.1              # fast writing of the output Excel (engine="xlsxwriter")
+pyarrow==25.0.1                # reading / writing the .parquet checkpoint
