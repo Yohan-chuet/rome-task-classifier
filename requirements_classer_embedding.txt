@@ -16,3 +16,5 @@ python-calamine==0.9.1         # fast reading of large Excel files (engine="cala
 openpyxl==3.1.5                # reading the reference file (pandas default .xlsx engine)
 xlsxwriter==3.3.1              # fast writing of the output Excel (engine="xlsxwriter")
 pyarrow==25.0.1                # reading / writing the .parquet checkpoint
+requests==2.34.2               
+peft==0.22.0                      

@@ -5,34 +5,41 @@ from pathlib import Path
 
 TEST = False
 EXCEL_MAX_ROWS = 1_048_575
+ROOT = Path(__file__).resolve().parent.parent   # src/constant.py -> racine du dépôt
+DATA_DIR = ROOT / "data"
+MODEL_DIR = ROOT / "model"
 
-REFERENTIEL_ROME = "path_to_referentiel_rome"
-
+REFERENTIEL_ROME = DATA_DIR / "reference" / "rome_competence_v2.xlsx"
 
 #//============Data for filter step============//
 CHUNK_SIZE = 500_000
 MIN_NBR_WORDS = 5
 MIN_TASK_LENGTH = 2
 data_to_filter = [
-    dict(chemin="file_to_filter.xlsx", colonne="word", description="description"),
+    dict(chemin="file_to_filter.xlsx", column="word", description="description"),
 ]
 
+#//============Data for extract step============//
+OUTPUT_DIR_EXTRACTED = DATA_DIR / "02_extracted"
+EXTRACTION_KEY = ["word", "label", "char_start", "char_end"]
+FILE_EXTRACT = [
+    dict(path=DATA_DIR / "01_raw" / "extractions.xlsx", column="extractions", description="description", sheet=0),
+]
 
 #//============Data for embedding step============//
 
 MODEL = dict(
-    model_name="./models/nvidia_top_score/Nemotron-3-Embed-8B-BF16_bs64/checkpoint-84",  # ex model_2 (meilleur @1)
+    model_name=str(MODEL_DIR / "nvidia_top_score" / "Nemotron-3-Embed-8B-BF16_bs64" / "checkpoint-84"),
     prefix_document="passage: ",
     prefix_query="query: ",
 )
 FILE_EMBEDDING = [
-    # file path, column holding the tasks, Excel sheet (name or number)
-    dict(path="./data_a_classer/taches_generees_10_par_macro.xlsx", column="libelle_competence", sheet=0),
+    dict(path=DATA_DIR / "03_tasks" / "taches_generees_10_par_macro.xlsx", column="libelle_competence", sheet=0),
 ]
+OUTPUT_DIR_EMBEDDING = DATA_DIR / "04_embedding"
 TOP_K = 10           # nombre de macros gardées par tâche
 BLOC = 5000          # tâches encodées entre deux sauvegardes
 BATCH_ENCODE = 32    # taille des lots sur la carte (32 laisse de la marge avec un modèle 8B)
-OUTPUT_DIR_EMBEDDING = "embedding"
 
 COLONNES = ["libelle_macro_competence", "libelle_macro_competence_en", "objectif", "domaine_competence"]
 

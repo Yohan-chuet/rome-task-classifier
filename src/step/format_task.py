@@ -1,13 +1,14 @@
-import constant
+import src.constant as constant
 import pandas as pd
+from src.step.step import Step
 
 
-class FormatTask:
+
+class FormatTask(Step):
     def __init__(self):
-        self.step_name = "FormatTask"
+        self.name= "FormatTask"
 
-    def run(self):
-        print(f"Running step: {self.step_name}")
+    def process(self):
         # df_task = pd.read_excel(constant.data_to_filter[0]["chemin"])
         df_task = "not implemented"
         cleaned_task = self.clean_task(df_task)

@@ -3,14 +3,16 @@ import argparse
 
 
 # step 
-from step.embedding import Embedding
-from step.format_task import FormatTask
-from step.qwen import Qwen
+from src.step.extract_task import Extract
+from src.step.embedding import Embedding
+from src.step.format_task import FormatTask
+from src.step.qwen import Qwen
 
 # Parameters
 parser = argparse.ArgumentParser(
     description="Description de votre script"
 )
+parser.add_argument("-ex", "--extract_task", action="store_true", help="use extract task step")
 parser.add_argument("-ft", "--format_task", action="store_true", help="use format task step")
 parser.add_argument("-em", "--embedding", action="store_true", help="use embedding step")
 parser.add_argument("-qw", "--qwen", action="store_true", help="use Qwen step")
@@ -23,6 +25,8 @@ def run_steps(steps):
 if __name__ == "__main__":
     args = parser.parse_args()
     steps = []  # always in pipeline order: format_task -> embedding -> qwen
+    if args.extract_task:
+        steps.append(Extract())
     if args.format_task:
         steps.append(FormatTask())
     if args.embedding:

@@ -1,19 +1,19 @@
 import requests
 
-import constant
+import src.constant as constant
 
 import ctypes
 import os
 import pandas as pd
+from src.step.step import Step
 
-class Qwen:
+
+class Qwen(Step):
     def __init__(self):
-        self.step_name = "Qwen"
+        self.name = "Qwen"
         self.reference = None
 
-    def run(self):
-        pass
-        print(f"Running step: {self.step_name}")
+    def process(self):
         self.prevent_sleep()
         self.load_reference()
         try:
